@@ -1,7 +1,8 @@
 import socket
 import threading
 import json
-import game
+import jeu
+import random
 
 
 
@@ -72,14 +73,14 @@ def reciev_2():
 
 def play(message, client, player): 
     state = message["state"]
-    res = game.best_move(state)
+    res = jeu.best_move(state)
     if res == None:
         return sender(json.dumps({"response" : "giveup",}), client)
     else:
         final = move_resp
         final["move"] = res
         return sender(json.dumps(final), client)
-    # moves = game.possibleMoves(state)
+    # moves = jeu.possibleMoves(state)
     # print("Possible moves:",moves)
     # if len(moves) < 1:
     #     return sender(json.dumps({"response" : "giveup",}), client)
@@ -91,7 +92,7 @@ def play(message, client, player):
     #     play = 1
     #     other = 0
     # for move in moves:
-    #     next_board = game.next(state, move)
+    #     next_board = jeu.next(state, move)
     #     dif = len(next_board["board"][play]) - len(next_board["board"][other])
     #     print("\nMove:", move)
     #     print("DIF :", dif)
@@ -114,6 +115,7 @@ def checker(message, client, player):
     m = json.loads(message)
     if message == ping_message:
         sender(pong_message, client)
+        print("connected")
     if m["request"] == "play":
         play(m, client, player)
 

@@ -1,6 +1,6 @@
 import copy
 from typing import final
-import serverPerso
+
 import random
 directions = [
     ( 0,  1),
@@ -90,23 +90,7 @@ def possibleMoves(state):
             pass
     return res
 
-def best_move(state):
-    moves = possibleMoves(state)
-    if len(moves) < 1:
-        return None
-    last_dif = 0
-    best_array = []
-    for move in moves:
-        newState = next(state, move)
-        dif = len(newState["board"][0]) - len(newState["board"][1])
-        if dif > 0 and dif > last_dif:
-            best_array.append(move)
-            last_dif = dif
-        elif dif == last_dif:
-            best_array.append(move)
-    if not last_dif:
-        return random.choice(moves)
-    return random.choice(best_array)
+
         
 
 def Othello(players):
@@ -159,6 +143,25 @@ def Othello(players):
         return newState
 
     return state, next
+
+def best_move(state):
+    moves = possibleMoves(state)
+    if len(moves) < 1:
+        return None
+    last_dif = 0
+    best_array = []
+    for move in moves:
+        newState = next(state, move)
+        dif = len(newState["board"][0]) - len(newState["board"][1])
+        if dif > 0 and dif > last_dif:
+            best_array = []
+            best_array.append(move)
+            last_dif = dif
+        elif dif == last_dif:
+            best_array.append(move)
+    if not last_dif:
+        return random.choice(moves)
+    return random.choice(best_array)
 
 Game = Othello
 
