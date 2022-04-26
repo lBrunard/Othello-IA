@@ -1,6 +1,9 @@
 import copy
+from sre_parse import State
 import time
 import random
+
+from cborad import board
 
 def timeit(fun):
 	def wrapper(*args, **kwargs):
@@ -156,9 +159,34 @@ def winner(state):
     return 1
     
 def currentPlayer(state):
-    playerIndex = state["current"]
-    return (playerIndex+1)%2
+    if state["board"][0] < state["board"][1]:
+        return 0 , 1
+    else:
+        return 1 , 0
     
+# Coin Parity Heuristic Value =
+# 100* (Max Player Coins –Min Player Coins)/
+# (Max Player Coins + Min Player Coins)
+def heuristic(state, player):
+    currentP = state["board"][currentPlayer(state)[0]]
+    otherP = state["board"][currentPlayer(state)[1]]
+    return 100*(len(currentP) - len(otherP))/(len(currentP) + len(otherP))
+
+def negamaxWithPruningLimitedDepth(state, player, depth=4, alpha=float('-inf'), beta=float('inf')):
+    if isGameOver(state) or depth == 0:
+        return -heuristic(state, player), None
+
+    theValue, theMove = float('-inf'), None
+    moves = possibleMoves(state)
+    for move in moves:
+        successor = next(state, move)
+        value, _ = negamaxWithPruningLimitedDepth(successor, player%2+1, depth-1, -beta, -alpha)
+        if value > theValue:
+            theValue, theMove = value, move
+            alpha = max(alpha, theValue)
+        if alpha >= beta:
+            break
+    return -theValue, theMove
 
 @timeit
 def negamaxWithPruning(state, player, alpha=float('-inf'), beta=float('inf')):
@@ -179,8 +207,7 @@ def negamaxWithPruning(state, player, alpha=float('-inf'), beta=float('inf')):
 
 @timeit
 def next_branch(state, fct):
-    print("N_B")
-    player = currentPlayer(state)
+    player = currentPlayer(state)[0]
     _, move = fct(state, player)
     return move
 
