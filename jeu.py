@@ -1,7 +1,15 @@
 import copy
-from typing import final
-
+import time
 import random
+
+def timeit(fun):
+	def wrapper(*args, **kwargs):
+		start = time.time()
+		res = fun(*args, **kwargs)
+		print('Executed {} in {}s'.format(fun, time.time() - start))
+		return res
+	return wrapper
+
 directions = [
     ( 0,  1),
     ( 0, -1),
@@ -91,8 +99,6 @@ def possibleMoves(state):
     return res
 
 
-        
-
 def Othello(players):
     # 00 01 02 03 04 05 06 07
     # 08 09 10 11 12 13 14 15
@@ -131,18 +137,53 @@ def Othello(players):
             
         newState['current'] = otherIndex
 
-        if isGameOver(newState):
-            if len(newState['board'][playerIndex]) > len(newState['board'][otherIndex]):
-                winner = playerIndex
-            elif len(newState['board'][playerIndex]) < len(newState['board'][otherIndex]):
-                winner = otherIndex
-            else:
-                print("Draw")#game.GameDraw(newState)
-            print("WINNER")#game.GameWin(winner, newState)
+        # if isGameOver(newState):
+        #     if len(newState['board'][playerIndex]) > len(newState['board'][otherIndex]):
+        #         winner = playerIndex
+        #     elif len(newState['board'][playerIndex]) < len(newState['board'][otherIndex]):
+        #         winner = otherIndex
+        #     else:
+        #         print("Draw")#game.GameDraw(newState)
+        #     print("WINNER")#game.GameWin(winner, newState)
         
         return newState
 
     return state, next
+
+def winner(state):
+    if len(state["board"][0]) > len(state["board"][1]):
+        return 0
+    return 1
+    
+def currentPlayer(state):
+    playerIndex = state["current"]
+    return (playerIndex+1)%2
+    
+
+@timeit
+def negamaxWithPruning(state, player, alpha=float('-inf'), beta=float('inf')):
+    if isGameOver(state):
+        return -winner(state), None
+    theValue, theMove = float('-inf'), None
+    moves = possibleMoves(state)
+    for move in moves:
+        print('hello')
+        successor = next(state, move)
+        value,_ = negamaxWithPruning(successor, player%2+1, -beta, -alpha)
+        if value > theValue:
+            theValue, theMove = value, move
+            alpha = max(alpha, theValue)
+        if alpha >= beta:
+            break
+    return -theValue, theMove
+
+@timeit
+def next_branch(state, fct):
+    print("N_B")
+    player = currentPlayer(state)
+    _, move = fct(state, player)
+    return move
+
 
 def best_move(state):
     moves = possibleMoves(state)

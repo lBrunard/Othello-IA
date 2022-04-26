@@ -1,3 +1,4 @@
+from re import I
 import socket
 import threading
 import json
@@ -51,14 +52,14 @@ def subscribe():
         s.connect(sender_address)
         s.send(inscription_2.encode())
         s.close()
-    with socket.socket() as s:
-        s.connect(sender_address)
-        s.send(inscription_3.encode())
-        s.close()
-    with socket.socket() as s:
-        s.connect(sender_address)
-        s.send(inscription_4.encode())
-        s.close()
+    # with socket.socket() as s:
+    #     s.connect(sender_address)
+    #     s.send(inscription_3.encode())
+    #     s.close()
+    # with socket.socket() as s:
+    #     s.connect(sender_address)
+    #     s.send(inscription_4.encode())
+    #     s.close()
     
 
 def sender(message, client):
@@ -73,7 +74,6 @@ def reciev_1():
             client, address = so.accept()
             with client:
                 message = client.recv(2048).decode()
-                player = client.getsockname()[1]
                 checker(message, client, "Client 1")
                 client.close()
 
@@ -86,7 +86,6 @@ def reciev_2():
             client, address = so.accept()
             with client:
                 message = client.recv(2048).decode()
-                player = client.getsockname()[1]
                 checker(message, client, "Client 2")
                 client.close()
 
@@ -119,11 +118,31 @@ def reciev_4():
 
 def play(message, client, player): 
     state = message["state"]
-    res = jeu.best_move(state)
-    if res == None:
-        return sender(json.dumps({"response" : "giveup",}), client)
+    long = len(state["board"][0]) + len(state["board"][1])
+    #print(long)
+    if player == "Client 2":
+        res = jeu.best_move(state)
+        if res == None:
+            print(player, " GIVEUP")
+            return sender(json.dumps({"response" : "giveup",}), client)
+        else:
+            final = move_resp
+            final["move"] = res
+            return sender(json.dumps(final), client)
+    elif player == "Client 1" and long < 55:
+        res = jeu.best_move(state)
+        if res == None:
+            print(player, " GIVEUP")
+            return sender(json.dumps({"response" : "giveup",}), client)
+        else:
+            final = move_resp
+            final["move"] = res
+            return sender(json.dumps(final), client)
     else:
-        final = move_resp
+        print("Negamax")
+        final = move_resp#jeu.next_branch(state, jeu.negamaxWithPruning)
+        res = jeu.next_branch(state, jeu.negamaxWithPruning)
+        print("MOVE WITH NEGAMAX = ", res)
         final["move"] = res
         return sender(json.dumps(final), client)
 
@@ -135,14 +154,15 @@ def checker(message, client, player):
         sender(pong_message, client)
         print("connected")
     if m["request"] == "play":
+        #print(m["errors"])
         play(m, client, player)
 
 
 subscribe()
 thread1 = threading.Thread(target=reciev_1, daemon=True)
-thread2 = threading.Thread(target=reciev_3, daemon=True)
-thread3 = threading.Thread(target=reciev_4, daemon=True)
+# thread2 = threading.Thread(target=reciev_3, daemon=True)
+# thread3 = threading.Thread(target=reciev_4, daemon=True)
 thread1.start()
-thread2.start()
-thread3.start()
+# thread2.start()
+# thread3.start()
 reciev_2()
