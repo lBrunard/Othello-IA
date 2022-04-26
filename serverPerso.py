@@ -19,6 +19,18 @@ inscription_2 =json.dumps({
    "name": "Client 2",
    "matricules": ["CL2", "CL2"]
 })
+inscription_3 =json.dumps({
+   "request": "subscribe",
+   "port": 6666,
+   "name": "Client 3",
+   "matricules": ["CL3", "CL3"]
+})
+inscription_4 =json.dumps({
+   "request": "subscribe",
+   "port": 5555,
+   "name": "Client 4",
+   "matricules": ["CL4", "CL4"]
+})
 
 move_resp = {
    "response": "move",
@@ -38,6 +50,14 @@ def subscribe():
     with socket.socket() as s:
         s.connect(sender_address)
         s.send(inscription_2.encode())
+        s.close()
+    with socket.socket() as s:
+        s.connect(sender_address)
+        s.send(inscription_3.encode())
+        s.close()
+    with socket.socket() as s:
+        s.connect(sender_address)
+        s.send(inscription_4.encode())
         s.close()
     
 
@@ -70,6 +90,32 @@ def reciev_2():
                 checker(message, client, "Client 2")
                 client.close()
 
+def reciev_3():
+    rc_address = ("127.0.0.1", 6666)
+    with socket.socket() as so:
+        so.bind(rc_address)
+        so.listen()
+        while True:
+            client, address = so.accept()
+            with client:
+                message = client.recv(2048).decode()
+                player = client.getsockname()[1]
+                checker(message, client, "Client 1")
+                client.close()
+
+def reciev_4():
+    rc_address = ("127.0.0.1", 5555)
+    with socket.socket() as so:
+        so.bind(rc_address)
+        so.listen()
+        while True:
+            client, address = so.accept()
+            with client:
+                message = client.recv(2048).decode()
+                player = client.getsockname()[1]
+                checker(message, client, "Client 2")
+                client.close()
+
 
 def play(message, client, player): 
     state = message["state"]
@@ -80,35 +126,7 @@ def play(message, client, player):
         final = move_resp
         final["move"] = res
         return sender(json.dumps(final), client)
-    # moves = jeu.possibleMoves(state)
-    # print("Possible moves:",moves)
-    # if len(moves) < 1:
-    #     return sender(json.dumps({"response" : "giveup",}), client)
-    # last_dif = 0
-    # best_array = []
-    # play = 0
-    # other = 1
-    # if player == "Client 2" and state["current"] == 1:
-    #     play = 1
-    #     other = 0
-    # for move in moves:
-    #     next_board = jeu.next(state, move)
-    #     dif = len(next_board["board"][play]) - len(next_board["board"][other])
-    #     print("\nMove:", move)
-    #     print("DIF :", dif)
-    #     if dif > 0 and dif > last_dif:
-    #         print("Give", len(next_board["board"][play]), "vs", len(next_board["board"][other]))
-    #         print("GOOD MOVE")
-    #         best_array.append(move)
-    #         last_dif = dif
-    #     elif dif == last_dif:
-    #         best_array.append(move)
-    # if last_dif == 0:
-    #     best_array.append(random.choice(moves))
-    #     print("RANDOM MOVE", best_array)
-    # final = move_resp
-    # final["move"] = random.choice(best_array)
-    # return sender(json.dumps(final), client)
+
 
 def checker(message, client, player):
 
@@ -121,6 +139,10 @@ def checker(message, client, player):
 
 
 subscribe()
-thread = threading.Thread(target=reciev_1, daemon=True)
-thread.start()
+thread1 = threading.Thread(target=reciev_1, daemon=True)
+thread2 = threading.Thread(target=reciev_3, daemon=True)
+thread3 = threading.Thread(target=reciev_4, daemon=True)
+thread1.start()
+thread2.start()
+thread3.start()
 reciev_2()
