@@ -2,8 +2,9 @@ import copy
 from sre_parse import State
 import time
 import random
-
+from collections import defaultdict
 from cborad import board
+import threading
 
 def timeit(fun):
 	def wrapper(*args, **kwargs):
@@ -116,8 +117,8 @@ def Othello(players):
         'players': players,
         'current': 0,
         'board': [
-            [28, 35],
-            [27, 36]
+            [i for i in range(63)],
+            [i for i in range(1)]
         ]
     }
 
@@ -153,24 +154,102 @@ def Othello(players):
 
     return state, next
 
+
+def currentPlayer(state):
+    if state["board"][0] < state["board"][1]:
+        return 0
+    else:
+        return 1
+    
+def otherplayer(player):
+    if player == 1:
+        return 0
+    return 1
+
 def winner(state):
-    if len(state["board"][0]) > len(state["board"][1]):
+    player = currentPlayer(state)
+    print(player)
+    if len(state["board"][player]) > len(state["board"][player%2+1]):
         return 0
     return 1
     
-def currentPlayer(state):
-    if state["board"][0] < state["board"][1]:
-        return 0 , 1
-    else:
-        return 1 , 0
+
     
 # Coin Parity Heuristic Value =
 # 100* (Max Player Coins –Min Player Coins)/
 # (Max Player Coins + Min Player Coins)
-def heuristic(state, player):
-    currentP = state["board"][currentPlayer(state)[0]]
-    otherP = state["board"][currentPlayer(state)[1]]
+
+def coinparty(state):
+    player = currentPlayer(state)
+    player_2 = otherplayer(player)
+    currentP = state["board"][player]
+    otherP = state["board"][player_2]
     return 100*(len(currentP) - len(otherP))/(len(currentP) + len(otherP))
+
+# if((Max Player Corner Value + Min Player Corner Value) !=0) 
+
+# Corner Heuristic Value =
+    # 100* (Max Player Corner Heurisitc Value –Min Player Corner Heuristic Value)/
+    # (Max Player Corner Heuristic Value + Min Player Corner else Heurisitc Value)
+#else:
+#   Corner Heuristic Value = 0
+
+def cornerCaptured(state):
+    corners = [0, 7, 56, 63]
+    player = currentPlayer(state)
+    player_2 = otherplayer(player)
+    currentP = state["board"][player]
+    currentCorners = 0
+    otherP = state["board"][player_2]
+    otherCorners = 0
+    for i in list(state["board"][currentP]):
+        if i in corners:
+            currentCorners += 1
+    for i in list(state["board"][otherP]):
+        if i in corners:
+            otherP += 1
+    return 100 * (currentCorners - otherCorners) / (currentCorners + otherCorners)
+
+    
+def heuristic(state, player):
+    return coinparty(state) #+ cornerCaptured(state)
+
+def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
+    cache = defaultdict(lambda : 0)
+    #negamx_thread = threading.Thread(target=cachedNegamaxWithPruningLimitedDepth, daemon=True)
+
+    def cachedNegamaxWithPruningLimitedDepth(state, player, depth, alpha=float('-inf'), beta=float('inf')):
+        over = isGameOver(state)
+        if over or depth == 0:
+            res = -heuristic(state, player), None, over
+
+        else:
+            theValue, theMove, theOver = float('-inf'), None, True
+            moves = possibleMoves(state)
+            possibilities = [(move, next(state, move)) for move in moves]
+            possibilities.sort(key=lambda poss: cache[tuple(poss[1])])
+            for move, successor in reversed(possibilities):
+                value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, player%2+1, depth-1, -beta, -alpha)
+                theOver = theOver and over
+                if value > theValue:
+                    theValue, theMove = value, move
+                    alpha = max(alpha, theValue)
+                if alpha >= beta:
+                    break
+            res = -theValue, theMove, theOver
+            cache[tuple(state)] = res[0]
+        return res
+
+    value, move = 0, None
+    depth = 1
+    start = time.time()
+    over = False
+    while value > -9 and time.time() - start < timeout and not over:
+        value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
+        depth += 1
+
+    print('depth =', depth)
+    return value, move
 
 def negamaxWithPruningLimitedDepth(state, player, depth=4, alpha=float('-inf'), beta=float('inf')):
     if isGameOver(state) or depth == 0:
@@ -186,6 +265,7 @@ def negamaxWithPruningLimitedDepth(state, player, depth=4, alpha=float('-inf'), 
             alpha = max(alpha, theValue)
         if alpha >= beta:
             break
+    
     return -theValue, theMove
 
 @timeit
@@ -195,7 +275,6 @@ def negamaxWithPruning(state, player, alpha=float('-inf'), beta=float('inf')):
     theValue, theMove = float('-inf'), None
     moves = possibleMoves(state)
     for move in moves:
-        print('hello')
         successor = next(state, move)
         value,_ = negamaxWithPruning(successor, player%2+1, -beta, -alpha)
         if value > theValue:
@@ -207,10 +286,9 @@ def negamaxWithPruning(state, player, alpha=float('-inf'), beta=float('inf')):
 
 @timeit
 def next_branch(state, fct):
-    player = currentPlayer(state)[0]
+    player = currentPlayer(state)
     _, move = fct(state, player)
     return move
-
 
 def best_move(state):
     moves = possibleMoves(state)
@@ -231,6 +309,13 @@ def best_move(state):
         return random.choice(moves)
     return random.choice(best_array)
 
+def random_choice(state):
+    moves = possibleMoves(state)
+    return random.choice(moves)
+
 Game = Othello
 
 state, next = Game(['LUR', 'HSL'])
+
+#print(next_branch(state, negamaxWithPruningLimitedDepth))
+print(coinparty(state))

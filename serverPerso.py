@@ -1,12 +1,7 @@
-from re import I
 import socket
 import threading
 import json
 import jeu
-import random
-
-
-
 
 inscription = json.dumps({
    "request": "subscribe",
@@ -20,7 +15,6 @@ inscription_2 =json.dumps({
    "name": "Client 2",
    "matricules": ["CL2", "CL2"]
 })
-
 
 move_resp = {
    "response": "move",
@@ -42,7 +36,6 @@ def subscribe():
         s.send(inscription_2.encode())
         s.close()
     
-
 def sender(message, client):
     client.send(message.encode())
 
@@ -70,51 +63,47 @@ def reciev_2():
                 checker(message, client, "Client 2")
                 client.close()
 
+def play_1(message, client, player):
+    try:
+        state = message["state"]
+        final = move_resp
+        res = jeu.next_branch(state, jeu.negamaxWithPruningLimitedDepth)
+        if res == None:
+            final["move"] = None
+            return sender(json.dumps(final), client)
+        final["move"] = res
+        return sender(json.dumps(final), client)
+    except Exception as e:
+        print(e)
+        client.close()
+    
 
 def play_2(message, client, player):
-    state = message["state"]
-    final = move_resp
-    res = jeu.next_branch(state, jeu.negamaxWithPruningLimitedDepth)
-    print(res)
-    if res == None:
-        final["move"] = None
-        return sender(json.dumps(final), client)
-    final["move"] = res
-    return sender(json.dumps(final), client)
-
-
-def play(message, client, player): 
-    state = message["state"]
-    final = move_resp
-    res = jeu.best_move(state)
-    if res == None:
-        final["move"] = res
-        return sender(json.dumps(final), client)
-    else:
+    try:
+        state = message["state"]
         final = move_resp
+        res = jeu.random_choice(state)
+        if res == None:
+            final["move"] = None
+            return sender(json.dumps(final), client)
         final["move"] = res
         return sender(json.dumps(final), client)
-
+    except Exception as e:
+        print(e)
+        client.close()
+    
 
 def checker(message, client, player):
-
     m = json.loads(message)
     if message == ping_message:
         sender(pong_message, client)
         print("connected")
-    elif m["request"] == "play" and player == "Client 1":
-        #print(m["errors"])
+    if m["request"] == "play" and player == "Client 1":
+        play_1(m, client, player)
+    if m["request"] == "play" and player == "Client 2":
         play_2(m, client, player)
-    elif m["request"] == "play" and player == "Client 2":
-        play(m, client, player)
-    
-
 
 subscribe()
 thread1 = threading.Thread(target=reciev_1, daemon=True)
-# thread2 = threading.Thread(target=reciev_3, daemon=True)
-# thread3 = threading.Thread(target=reciev_4, daemon=True)
 thread1.start()
-# thread2.start()
-# thread3.start()
 reciev_2()
