@@ -64,33 +64,26 @@ def reciev_2():
                 client.close()
 
 def play_1(message, client, player):
-    try:
-        state = message["state"]
-        final = move_resp
-        res = jeu.next_branch(state, jeu.negamaxWithPruningLimitedDepth)
-        if res == None:
-            final["move"] = None
-            return sender(json.dumps(final), client)
-        final["move"] = res
+    state = message["state"]
+    final = move_resp
+    res = jeu.next_branch(state, jeu.negamaxWithPruningIterativeDeepening)
+    if res == None:
+        final["move"] = None
         return sender(json.dumps(final), client)
-    except Exception as e:
-        print(e)
-        client.close()
+    final["move"] = res
+    return sender(json.dumps(final), client)
+ 
     
 
 def play_2(message, client, player):
-    try:
-        state = message["state"]
-        final = move_resp
-        res = jeu.random_choice(state)
-        if res == None:
-            final["move"] = None
-            return sender(json.dumps(final), client)
-        final["move"] = res
+    state = message["state"]
+    final = move_resp
+    res = jeu.random_choice(state)
+    if res == None:
+        final["move"] = None
         return sender(json.dumps(final), client)
-    except Exception as e:
-        print(e)
-        client.close()
+    final["move"] = res
+    return sender(json.dumps(final), client)
     
 
 def checker(message, client, player):
@@ -101,7 +94,7 @@ def checker(message, client, player):
     if m["request"] == "play" and player == "Client 1":
         play_1(m, client, player)
     if m["request"] == "play" and player == "Client 2":
-        play_2(m, client, player)
+        play_1(m, client, player)
 
 subscribe()
 thread1 = threading.Thread(target=reciev_1, daemon=True)

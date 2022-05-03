@@ -5,6 +5,7 @@ import random
 from collections import defaultdict
 from cborad import board
 import threading
+import game
 
 def timeit(fun):
 	def wrapper(*args, **kwargs):
@@ -64,10 +65,10 @@ def willBeTaken(state, move):
     otherIndex = (playerIndex+1)%2
 
     if not (0 <= move < 64):
-        raise "Not in board"#raise game.BadMove('Your must be between 0 inclusive and 64 exclusive')
+        raise game.BadMove('Your must be between 0 inclusive and 64 exclusive')
 
     if move in state['board'][0] + state['board'][1]:
-        raise "Case not free"#raise game.BadMove('This case is not free')
+        raise game.BadMove('This case is not free')
 
     board = []
     for i in range(2):  
@@ -88,7 +89,7 @@ def willBeTaken(state, move):
                 break
 
     if len(cases) == 0:
-        raise "Not takable place"#raise game.BadMove('Your move must take opponent\'s pieces')
+        raise game.BadMove('Your move must take opponent\'s pieces')
     
     return [index(case) for case in cases]
 
@@ -98,7 +99,7 @@ def possibleMoves(state):
         try:
             willBeTaken(state, move)
             res.append(move)
-        except :#game.BadMove:
+        except Exception:#game.BadMove:
             pass
     return res
 
@@ -117,8 +118,8 @@ def Othello(players):
         'players': players,
         'current': 0,
         'board': [
-            [i for i in range(63)],
-            [i for i in range(1)]
+            [i for i in range(12)],
+            [i for i in range(11)]
         ]
     }
 
@@ -140,15 +141,6 @@ def Othello(players):
                 newState['board'][playerIndex].append(case)
             
         newState['current'] = otherIndex
-
-        # if isGameOver(newState):
-        #     if len(newState['board'][playerIndex]) > len(newState['board'][otherIndex]):
-        #         winner = playerIndex
-        #     elif len(newState['board'][playerIndex]) < len(newState['board'][otherIndex]):
-        #         winner = otherIndex
-        #     else:
-        #         print("Draw")#game.GameDraw(newState)
-        #     print("WINNER")#game.GameWin(winner, newState)
         
         return newState
 
@@ -168,7 +160,6 @@ def otherplayer(player):
 
 def winner(state):
     player = currentPlayer(state)
-    print(player)
     if len(state["board"][player]) > len(state["board"][player%2+1]):
         return 0
     return 1
@@ -182,9 +173,9 @@ def winner(state):
 def coinparty(state):
     player = currentPlayer(state)
     player_2 = otherplayer(player)
-    currentP = state["board"][player]
-    otherP = state["board"][player_2]
-    return 100*(len(currentP) - len(otherP))/(len(currentP) + len(otherP))
+    currentP = len(state["board"][player])
+    otherP = len(state["board"][player_2])
+    return 100*((currentP-otherP)/(currentP+otherP))
 
 # if((Max Player Corner Value + Min Player Corner Value) !=0) 
 
@@ -202,17 +193,23 @@ def cornerCaptured(state):
     currentCorners = 0
     otherP = state["board"][player_2]
     otherCorners = 0
-    for i in list(state["board"][currentP]):
+    for i in currentP:
         if i in corners:
             currentCorners += 1
-    for i in list(state["board"][otherP]):
+    for i in otherP:
         if i in corners:
-            otherP += 1
-    return 100 * (currentCorners - otherCorners) / (currentCorners + otherCorners)
+            otherCorners += 1
+    try : 
+        res = 100 * (currentCorners - otherCorners) / (currentCorners + otherCorners)
+    except ZeroDivisionError:
+        res = 0
+    return res
 
     
 def heuristic(state, player):
-    return coinparty(state) #+ cornerCaptured(state)
+    player = currentPlayer(state)
+    return coinparty(state) + cornerCaptured(state) 
+    
 
 def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
     cache = defaultdict(lambda : 0)
@@ -244,45 +241,12 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
     depth = 1
     start = time.time()
     over = False
-    while value > -9 and time.time() - start < timeout and not over:
+    while value > -200 and time.time() - start < timeout and not over:
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
         depth += 1
 
     print('depth =', depth)
     return value, move
-
-def negamaxWithPruningLimitedDepth(state, player, depth=4, alpha=float('-inf'), beta=float('inf')):
-    if isGameOver(state) or depth == 0:
-        return -heuristic(state, player), None
-
-    theValue, theMove = float('-inf'), None
-    moves = possibleMoves(state)
-    for move in moves:
-        successor = next(state, move)
-        value, _ = negamaxWithPruningLimitedDepth(successor, player%2+1, depth-1, -beta, -alpha)
-        if value > theValue:
-            theValue, theMove = value, move
-            alpha = max(alpha, theValue)
-        if alpha >= beta:
-            break
-    
-    return -theValue, theMove
-
-@timeit
-def negamaxWithPruning(state, player, alpha=float('-inf'), beta=float('inf')):
-    if isGameOver(state):
-        return -winner(state), None
-    theValue, theMove = float('-inf'), None
-    moves = possibleMoves(state)
-    for move in moves:
-        successor = next(state, move)
-        value,_ = negamaxWithPruning(successor, player%2+1, -beta, -alpha)
-        if value > theValue:
-            theValue, theMove = value, move
-            alpha = max(alpha, theValue)
-        if alpha >= beta:
-            break
-    return -theValue, theMove
 
 @timeit
 def next_branch(state, fct):
