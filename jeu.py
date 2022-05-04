@@ -58,9 +58,10 @@ def isGameOver(state):
     state['current'] = playerIndex
     return res
 
-def willBeTaken(state, move):
-    playerIndex = state['current']
-    otherIndex = (playerIndex+1)%2
+def willBeTaken(state, move, player= None):
+    if player == None:
+        player = state['current']
+    otherIndex = (player+1)%2
 
     if not (0 <= move < 64):
         raise game.BadMove('Your must be between 0 inclusive and 64 exclusive')
@@ -80,7 +81,7 @@ def willBeTaken(state, move):
         for case in walk(move, direction):
             if case in board[otherIndex]:
                 mayBe.add(case)
-            elif case in board[playerIndex]:
+            elif case in board[player]:
                 cases |= mayBe
                 break
             else:
@@ -91,11 +92,11 @@ def willBeTaken(state, move):
     
     return [index(case) for case in cases]
 
-def possibleMoves(state):
+def possibleMoves(state, player = None):
     res = []
     for move in range(64):
         try:
-            willBeTaken(state, move)
+            willBeTaken(state, move, player)
             res.append(move)
         except Exception:#game.BadMove:
             pass
@@ -116,8 +117,8 @@ def Othello(players):
         'players': players,
         'current': 0,
         'board': [
-            [i for i in range(12)],
-            [i for i in range(11)]
+            [28,35],
+            [27,36]
         ]
     }
 
@@ -188,17 +189,24 @@ def cornerCaptured(state, player):
         res = 100 * (currentCorners - otherCorners) / (currentCorners + otherCorners)
     except ZeroDivisionError:
         res = 0
-    print(res)
     return res
 
 # Nombre de move que je vais pouvoir faire comparé a ceux de l'adversaire
 
 def mobility(state, player):
     player_2 = (player+1)%2
+    playerMoves = possibleMoves(state, player)
+    otherMoves = possibleMoves(state, player_2)
+    print("Player : ",playerMoves)
+    print("Other : ", otherMoves)
+    # res = 100 * (playerMoves - otherMoves) / (playerMoves + otherMoves)
+    # print("RES : ", res)
+
     
     
 def heuristic(state, player):
     player = currentPlayer(state)
+    mobility(state, player)
     res = coinparty(state, player) + cornerCaptured(state, player) 
     #print(round(res))
     return res
@@ -221,6 +229,7 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
             possibilities = [(move, next(state, move)) for move in moves]
             possibilities.sort(key=lambda poss: cache[tuple(poss[1])])
             for move, successor in reversed(possibilities):
+                time.sleep(2)
                 value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, (player+1)%2, depth-1, -beta, -alpha)
                 theOver = theOver and over
                 if value > theValue:
