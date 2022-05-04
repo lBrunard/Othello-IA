@@ -84,6 +84,10 @@ def play_2(message, client, player):
         return sender(json.dumps(final), client)
     final["move"] = res
     return sender(json.dumps(final), client)
+
+def firstPlayer(state):
+    if len(state["board"][0]) == 2 and len(state["board"][1]) == 3:
+        pass
     
 
 def checker(message, client, player):
@@ -94,9 +98,10 @@ def checker(message, client, player):
     if m["request"] == "play" and player == "Client 1":
         play_1(m, client, player)
     if m["request"] == "play" and player == "Client 2":
-        play_1(m, client, player)
+        play_2(m, client, player)
 
-subscribe()
-thread1 = threading.Thread(target=reciev_1, daemon=True)
-thread1.start()
-reciev_2()
+if __name__ == "__main__":
+    subscribe()
+    thread1 = threading.Thread(target=reciev_1, daemon=True)
+    thread1.start()
+    reciev_2()

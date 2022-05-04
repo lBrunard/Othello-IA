@@ -3,8 +3,6 @@ from sre_parse import State
 import time
 import random
 from collections import defaultdict
-from cborad import board
-import threading
 import game
 
 def timeit(fun):
@@ -165,30 +163,17 @@ def winner(state):
     return 1
     
 
-    
-# Coin Parity Heuristic Value =
-# 100* (Max Player Coins –Min Player Coins)/
-# (Max Player Coins + Min Player Coins)
 
-def coinparty(state):
-    player = currentPlayer(state)
-    player_2 = otherplayer(player)
+
+def coinparty(state, player):
+    player_2 = (player+1)%2
     currentP = len(state["board"][player])
     otherP = len(state["board"][player_2])
     return 100*((currentP-otherP)/(currentP+otherP))
 
-# if((Max Player Corner Value + Min Player Corner Value) !=0) 
-
-# Corner Heuristic Value =
-    # 100* (Max Player Corner Heurisitc Value –Min Player Corner Heuristic Value)/
-    # (Max Player Corner Heuristic Value + Min Player Corner else Heurisitc Value)
-#else:
-#   Corner Heuristic Value = 0
-
-def cornerCaptured(state):
+def cornerCaptured(state, player):
     corners = [0, 7, 56, 63]
-    player = currentPlayer(state)
-    player_2 = otherplayer(player)
+    player_2 = (player+1)%2
     currentP = state["board"][player]
     currentCorners = 0
     otherP = state["board"][player_2]
@@ -203,12 +188,20 @@ def cornerCaptured(state):
         res = 100 * (currentCorners - otherCorners) / (currentCorners + otherCorners)
     except ZeroDivisionError:
         res = 0
+    print(res)
     return res
 
+# Nombre de move que je vais pouvoir faire comparé a ceux de l'adversaire
+
+def mobility(state, player):
+    player_2 = (player+1)%2
+    
     
 def heuristic(state, player):
     player = currentPlayer(state)
-    return coinparty(state) + cornerCaptured(state) 
+    res = coinparty(state, player) + cornerCaptured(state, player) 
+    #print(round(res))
+    return res
     
 
 def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
@@ -217,16 +210,18 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
 
     def cachedNegamaxWithPruningLimitedDepth(state, player, depth, alpha=float('-inf'), beta=float('inf')):
         over = isGameOver(state)
+
         if over or depth == 0:
-            res = -heuristic(state, player), None, over
+            res = heuristic(state, player), None, over
 
         else:
             theValue, theMove, theOver = float('-inf'), None, True
             moves = possibleMoves(state)
+            #print(moves)
             possibilities = [(move, next(state, move)) for move in moves]
             possibilities.sort(key=lambda poss: cache[tuple(poss[1])])
             for move, successor in reversed(possibilities):
-                value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, player%2+1, depth-1, -beta, -alpha)
+                value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, (player+1)%2, depth-1, -beta, -alpha)
                 theOver = theOver and over
                 if value > theValue:
                     theValue, theMove = value, move
@@ -245,7 +240,8 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
         depth += 1
 
-    print('depth =', depth)
+    #print('depth =', depth)
+    print(f"Value : {value}, Move : {move}")
     return value, move
 
 @timeit
@@ -254,32 +250,17 @@ def next_branch(state, fct):
     _, move = fct(state, player)
     return move
 
-def best_move(state):
-    moves = possibleMoves(state)
-    if len(moves) < 1:
-        return None
-    last_dif = 0
-    best_array = []
-    for move in moves:
-        newState = next(state, move)
-        dif = len(newState["board"][0]) - len(newState["board"][1])
-        if dif > 0 and dif > last_dif:
-            best_array = []
-            best_array.append(move)
-            last_dif = dif
-        elif dif == last_dif:
-            best_array.append(move)
-    if not last_dif:
-        return random.choice(moves)
-    return random.choice(best_array)
-
 def random_choice(state):
     moves = possibleMoves(state)
-    return random.choice(moves)
+    try : 
+        return random.choice(moves)
+    except IndexError as e:
+        print(e, " in random choice")
+        return None
+
 
 Game = Othello
 
 state, next = Game(['LUR', 'HSL'])
 
 #print(next_branch(state, negamaxWithPruningLimitedDepth))
-print(coinparty(state))
