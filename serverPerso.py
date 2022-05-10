@@ -5,13 +5,13 @@ import jeu
 
 inscription = json.dumps({
    "request": "subscribe",
-   "port": 8888,
+   "port": 6666,
    "name": "Client 1",
    "matricules": ["CL1", "CL1"]
 })
 inscription_2 =json.dumps({
    "request": "subscribe",
-   "port": 7777,
+   "port": 5555,
    "name": "Client 2",
    "matricules": ["CL2", "CL2"]
 })
@@ -40,7 +40,7 @@ def sender(message, client):
     client.send(message.encode())
 
 def reciev_1():
-    rc_address = ("127.0.0.1", 8888)
+    rc_address = ("127.0.0.1", 6666)
     with socket.socket() as so:
         so.bind(rc_address)
         so.listen()
@@ -52,7 +52,7 @@ def reciev_1():
                 client.close()
 
 def reciev_2():
-    rc_address = ("127.0.0.1", 7777)
+    rc_address = ("127.0.0.1", 5555)
     with socket.socket() as so:
         so.bind(rc_address)
         so.listen()
@@ -84,10 +84,6 @@ def play_2(message, client, player):
         return sender(json.dumps(final), client)
     final["move"] = res
     return sender(json.dumps(final), client)
-
-def firstPlayer(state):
-    if len(state["board"][0]) == 2 and len(state["board"][1]) == 3:
-        pass
     
 
 def checker(message, client, player):

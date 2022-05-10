@@ -1,5 +1,4 @@
 import copy
-from sre_parse import State
 import time
 import random
 from collections import defaultdict
@@ -203,11 +202,11 @@ def mobility(state, player):
     # print("RES : ", res)
 
     
-    
+@timeit
 def heuristic(state, player):
     player = currentPlayer(state)
-    mobility(state, player)
-    res = coinparty(state, player) + cornerCaptured(state, player) 
+    #mobility(state, player)
+    res = coinparty(state, player) #+ cornerCaptured(state, player) 
     #print(round(res))
     return res
     
@@ -250,7 +249,7 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
         depth += 1
 
     #print('depth =', depth)
-    print(f"Value : {value}, Move : {move}")
+    print(f"Value : {value}, Move : {move}, Depth : {depth}")
     return value, move
 
 @timeit
