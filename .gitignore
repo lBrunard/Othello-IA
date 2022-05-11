@@ -1,4 +1,4 @@
-.__pychache__
+__pychache__/
 cboard.py
 htmlcov
 .pytest_cache
@@ -12,5 +12,6 @@ __pycache__/game.cpython-39.pyc
 __pycache__/jeu.cpython-39.pyc
 __pycache__/serverPerso.cpython-39.pyc
 .coverage
-github
+.coverage.*
+github/
 
