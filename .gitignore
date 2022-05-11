@@ -13,5 +13,5 @@ __pycache__/jeu.cpython-39.pyc
 __pycache__/serverPerso.cpython-39.pyc
 .coverage
 .coverage.*
-.github.*
+.github/
 
