@@ -1,4 +1,5 @@
 ![Gitlab code coverage](https://img.shields.io/gitlab/coverage/lBrunard/Othello-IA/main_2?style=plastic)
+https://img.shields.io/testspace/pass-ratio/lBrunard/Othello-IA/main_2
 
 # Othello IA project
 
