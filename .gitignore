@@ -3,7 +3,7 @@ cboard.py
 htmlcov
 .pytest_cache
 .vscode
-.gitignore
+gitignore
 __pycache__/game.cpython-39.pyc
 __pycache__/jeu.cpython-39.pyc
 __pycache__/main_test.cpython-39-pytest-7.1.2.pyc
@@ -12,5 +12,5 @@ __pycache__/game.cpython-39.pyc
 __pycache__/jeu.cpython-39.pyc
 __pycache__/serverPerso.cpython-39.pyc
 .coverage
-.github
+github
 
