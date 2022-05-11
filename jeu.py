@@ -195,7 +195,6 @@ def heuristic(state, player= None):
 
 def negamaxWithPruningIterativeDeepening(state, player, timeout=1):
     cache = defaultdict(lambda : 0)
-    #negamx_thread = threading.Thread(target=cachedNegamaxWithPruningLimitedDepth, daemon=True)
 
     def cachedNegamaxWithPruningLimitedDepth(state, player, depth, alpha=float('-inf'), beta=float('inf')):
         over = isGameOver(state)
