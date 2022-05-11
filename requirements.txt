@@ -1,3 +1,2 @@
-json
-copy
+pytest
 collections
