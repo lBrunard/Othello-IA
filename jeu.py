@@ -3,7 +3,6 @@ from sre_parse import State
 import time
 import random
 from collections import defaultdict
-from cborad import board
 import threading
 import game
 
@@ -99,8 +98,9 @@ def possibleMoves(state):
         try:
             willBeTaken(state, move)
             res.append(move)
-        except Exception:#game.BadMove:
+        except game.BadMove:
             pass
+        print(res)
     return res
 
 
@@ -118,8 +118,8 @@ def Othello(players):
         'players': players,
         'current': 0,
         'board': [
-            [i for i in range(12)],
-            [i for i in range(11)]
+            [28,35],
+            [27,36]
         ]
     }
 
@@ -147,20 +147,9 @@ def Othello(players):
     return state, next
 
 
-def currentPlayer(state):
-    if state["board"][0] < state["board"][1]:
-        return 0
-    else:
-        return 1
-    
-def otherplayer(player):
-    if player == 1:
-        return 0
-    return 1
-
 def winner(state):
-    player = currentPlayer(state)
-    if len(state["board"][player]) > len(state["board"][player%2+1]):
+    player = state['current']
+    if len(state["board"][player]) > len(state["board"][(player+1)%2]):
         return 0
     return 1
     
@@ -171,8 +160,8 @@ def winner(state):
 # (Max Player Coins + Min Player Coins)
 
 def coinparty(state):
-    player = currentPlayer(state)
-    player_2 = otherplayer(player)
+    player = state["current"]
+    player_2 = (player+1)%2
     currentP = len(state["board"][player])
     otherP = len(state["board"][player_2])
     return 100*((currentP-otherP)/(currentP+otherP))
@@ -187,8 +176,8 @@ def coinparty(state):
 
 def cornerCaptured(state):
     corners = [0, 7, 56, 63]
-    player = currentPlayer(state)
-    player_2 = otherplayer(player)
+    player = state['current']
+    player_2 = (player+1)%2
     currentP = state["board"][player]
     currentCorners = 0
     otherP = state["board"][player_2]
@@ -207,7 +196,7 @@ def cornerCaptured(state):
 
     
 def heuristic(state, player):
-    player = currentPlayer(state)
+    player = state['current']
     return coinparty(state) + cornerCaptured(state) 
     
 
@@ -226,9 +215,9 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
             possibilities = [(move, next(state, move)) for move in moves]
             possibilities.sort(key=lambda poss: cache[tuple(poss[1])])
             for move, successor in reversed(possibilities):
-                value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, player%2+1, depth-1, -beta, -alpha)
+                value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, (player+1)%2, depth-1, -beta, -alpha)
                 theOver = theOver and over
-                if value > theValue:
+                if value > theValue and value != float("-inf") or value != float("inf"):
                     theValue, theMove = value, move
                     alpha = max(alpha, theValue)
                 if alpha >= beta:
@@ -243,6 +232,7 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
     over = False
     while value > -200 and time.time() - start < timeout and not over:
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
+        print(f"value : {value},  move : {move},  over : {over}")
         depth += 1
 
     print('depth =', depth)
@@ -250,8 +240,15 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
 
 @timeit
 def next_branch(state, fct):
-    player = currentPlayer(state)
+    player = state['current']
     _, move = fct(state, player)
+    try : 
+        print(move)
+        willBeTaken(state, move)
+    except game.BadMove:
+        print("BADMOVE")
+        print(move)
+        next_branch(state, negamaxWithPruningIterativeDeepening)
     return move
 
 def best_move(state):
@@ -275,11 +272,14 @@ def best_move(state):
 
 def random_choice(state):
     moves = possibleMoves(state)
-    return random.choice(moves)
+    res = None
+    if moves != []:
+        res =  random.choice(moves)
+    print(f"Possible moves : {moves}, Choose : {res}")
+    return res
 
 Game = Othello
 
 state, next = Game(['LUR', 'HSL'])
 
 #print(next_branch(state, negamaxWithPruningLimitedDepth))
-print(coinparty(state))
