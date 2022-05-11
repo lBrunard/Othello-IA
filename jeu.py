@@ -282,4 +282,5 @@ Game = Othello
 
 state, next = Game(['LUR', 'HSL'])
 
+
 #print(next_branch(state, negamaxWithPruningLimitedDepth))
