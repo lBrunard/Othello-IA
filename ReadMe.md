@@ -1,3 +1,5 @@
+![Gitlab code coverage](https://img.shields.io/gitlab/coverage/lBrunard/Othello-IA/main_2?style=plastic)
+
 # Othello IA project
 
 IA created for the purpose of the PI2C course project.
