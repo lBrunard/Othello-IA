@@ -64,14 +64,6 @@ def test_game():
     except game.BadMove:
         assert True
 
-def test_explicitly_enable_socket(socket_enabled):
-    assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-
-@pytest.mark.enable_socket
-def test_explicitly_enable_socket_with_mark():
-    assert socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
 
 
 
