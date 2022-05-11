@@ -94,9 +94,11 @@ def checker(message, client, player):
     if m["request"] == "play" and player == "Client 1":
         play_1(m, client, player)
     if m["request"] == "play" and player == "Client 2":
-        play_1(m, client, player)
+        play_2(m, client, player)
 
-subscribe()
-thread1 = threading.Thread(target=reciev_1, daemon=True)
-thread1.start()
-reciev_2()
+
+if "__main__" == __name__:
+    subscribe()
+    thread1 = threading.Thread(target=reciev_1, daemon=True)
+    thread1.start()
+    reciev_2()

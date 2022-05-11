@@ -100,7 +100,6 @@ def possibleMoves(state):
             res.append(move)
         except game.BadMove:
             pass
-        print(res)
     return res
 
 
@@ -129,7 +128,7 @@ def Othello(players):
         otherIndex = (playerIndex+1)%2
 
         if len(possibleMoves(state)) > 0 and move is None:
-            raise ("Impossible")#game.BadMove('You cannot pass your turn if there are possible moves')
+            raise game.BadMove('You cannot pass your turn if there are possible moves')
 
         if move is not None:
             cases = willBeTaken(state, move)
@@ -147,12 +146,6 @@ def Othello(players):
     return state, next
 
 
-def winner(state):
-    player = state['current']
-    if len(state["board"][player]) > len(state["board"][(player+1)%2]):
-        return 0
-    return 1
-    
 
     
 # Coin Parity Heuristic Value =
@@ -195,12 +188,12 @@ def cornerCaptured(state):
     return res
 
     
-def heuristic(state, player):
+def heuristic(state, player= None):
     player = state['current']
     return coinparty(state) + cornerCaptured(state) 
     
 
-def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
+def negamaxWithPruningIterativeDeepening(state, player, timeout=1):
     cache = defaultdict(lambda : 0)
     #negamx_thread = threading.Thread(target=cachedNegamaxWithPruningLimitedDepth, daemon=True)
 
@@ -211,8 +204,7 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
 
         else:
             theValue, theMove, theOver = float('-inf'), None, True
-            moves = possibleMoves(state)
-            possibilities = [(move, next(state, move)) for move in moves]
+            possibilities = [(move, next(state, move)) for move in possibleMoves(state)]
             possibilities.sort(key=lambda poss: cache[tuple(poss[1])])
             for move, successor in reversed(possibilities):
                 value, _, over = cachedNegamaxWithPruningLimitedDepth(successor, (player+1)%2, depth-1, -beta, -alpha)
@@ -232,55 +224,22 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.2):
     over = False
     while value > -200 and time.time() - start < timeout and not over:
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
-        print(f"value : {value},  move : {move},  over : {over}")
         depth += 1
 
-    print('depth =', depth)
     return value, move
 
 @timeit
 def next_branch(state, fct):
     player = state['current']
     _, move = fct(state, player)
-    try : 
-        print(move)
-        willBeTaken(state, move)
-    except game.BadMove:
-        print("BADMOVE")
-        print(move)
-        next_branch(state, negamaxWithPruningIterativeDeepening)
     return move
-
-def best_move(state):
-    moves = possibleMoves(state)
-    if len(moves) < 1:
-        return None
-    last_dif = 0
-    best_array = []
-    for move in moves:
-        newState = next(state, move)
-        dif = len(newState["board"][0]) - len(newState["board"][1])
-        if dif > 0 and dif > last_dif:
-            best_array = []
-            best_array.append(move)
-            last_dif = dif
-        elif dif == last_dif:
-            best_array.append(move)
-    if not last_dif:
-        return random.choice(moves)
-    return random.choice(best_array)
 
 def random_choice(state):
     moves = possibleMoves(state)
     res = None
     if moves != []:
         res =  random.choice(moves)
-    print(f"Possible moves : {moves}, Choose : {res}")
     return res
 
 Game = Othello
-
-state, next = Game(['LUR', 'HSL'])
-
-
-#print(next_branch(state, negamaxWithPruningLimitedDepth))
+state, next = Game(['LB', 'LB'])
