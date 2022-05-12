@@ -23,6 +23,30 @@ move_resp = {
 ping_message = json.dumps({"request": "ping"})
 pong_message = json.dumps({"response": "pong"})
 
+class client:
+    def __init__(self, name, port, type, host):
+        self.name = name
+        self.port = port
+        self.type = type
+        self.sender_addr = (host, 3000)
+
+    def subscribe(self):
+        print("Creating Client")
+        inscription = json.dumps({
+            "request": "subscribe",
+            "port": self.port,
+            "name": self.name,
+            "matricules": [self.type, str(self.port)]
+        })
+        with socket.socket() as s:
+            s.connect(self.sender_addr)
+            s.send(inscription.encode())
+            s.close()
+        
+    def create_thre
+
+
+
 def creat_listener(port, name, type):
     name = threading.Thread(target=reciev, args=(port,name, type))
     name.start()
@@ -37,7 +61,7 @@ def subscribe():
             "request": "subscribe",
             "port": str(port),
             "name": "Client " + str(i),
-            "matricules": ["i", "i{}".format(i+2)]
+            "matricules": [type, str(port)]
         })
 
         sender_address = (sys.argv[1], 3000)
@@ -61,6 +85,7 @@ def reciev(port, name, type):
             client, address = so.accept()
             with client:
                 message = client.recv(2048).decode()
+                print(message)
                 checker(message, client, name, type)
                 client.close()
 
