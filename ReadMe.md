@@ -42,15 +42,27 @@ def cornerCaptured(state):
     except ZeroDivisionError:
         res = 0
     return res
-
-
 ```
 Since when a corner is taken, it cannot be taken back. Taking a corner gives more weight to the shot.
 If there are no corners taken, the function returns a value of 0.
 Like coinParty, the function normally returns a value between -100 and 100
-
-
-
+### Mobility
+```py
+def mobility(state):
+    player = state['current']
+    player_2 = (player+1)%2
+    player_mob = len(possibleMoves(state))
+    state_2 = copy.deepcopy(state)
+    state_2['current'] = player_2
+    player_2_mob = len(possibleMoves(state_2))
+    print(player_mob, player_2_mob)
+    try : 
+        res = 100*((player_mob-player_2_mob)/(player_mob+player_2_mob))
+    except ZeroDivisionError:
+        res = 0
+    return res
+```
+The mobility function calculates the number of moves it will be possible to play for each of the 2 players. En returns a value between -100 and 100 like the other heuristic functions
 
 ## License
 Luis Brunard (20078)
