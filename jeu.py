@@ -2,7 +2,7 @@ import copy
 import time
 import random
 from collections import defaultdict
-import threading
+from threading import Thread
 import game
 
 def timeit(fun):
@@ -206,15 +206,12 @@ def heuristic(state, player= None):
     return coinparty(state) + cornerCaptured(state) + mobility(state) + stable(state)
     
 
-def negamaxWithPruningIterativeDeepening(state, player, timeout=0.7):
+def negamaxWithPruningIterativeDeepening(state, player, timeout=2.7):
     cache = defaultdict(lambda : 0)
-
-
     def cachedNegamaxWithPruningLimitedDepth(state, player, depth, alpha=float('-inf'), beta=float('inf')):
         over = isGameOver(state)
         if over or depth == 0:
             res = -heuristic(state, player), None, over
-
         else:
             theValue, theMove, theOver = float('-inf'), None, True
             possibilities = [(move, next(state, move)) for move in possibleMoves(state)]
@@ -235,7 +232,6 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.7):
     depth = 1
     start = time.time()
     over = False
-
 
     while value > -350 and time.time() - start < timeout and not over:
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
