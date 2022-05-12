@@ -64,5 +64,21 @@ def mobility(state):
 ```
 The mobility function calculates the number of moves it will be possible to play for each of the 2 players. En returns a value between -100 and 100 like the other heuristic functions
 
+### Stability
+```py
+def stable(state):
+    player = state['current']
+    player_2 = (player+1)%2
+    sides = [[i for i in range(1,7)], [i for i in range(8, 49) if i % 8 == 0], [i for i in range(57, 63)], [15,23,31,39,47,55]]
+    player_stab = [i for i in state["board"][player] if i in sides]
+    player_2_stab = [i for i in state["board"][player_2] if i in sides]
+    try :
+        res = 50*((len(player_stab)-len(player_2_stab))/(len(player_stab)+len(player_2_stab)))
+    except ZeroDivisionError:
+        res = 0
+    return res
+```
+The stable function calculates the number of sides that each player will have at the traded move. The function returns a value between 50 and -50, the half of the function concerning the corners because the corners cannot be taken and the sides are more likely to be taken
+
 ## License
 Luis Brunard (20078)

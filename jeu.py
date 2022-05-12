@@ -181,16 +181,29 @@ def mobility(state):
     state_2 = copy.deepcopy(state)
     state_2['current'] = player_2
     player_2_mob = len(possibleMoves(state_2))
-    print(player_mob, player_2_mob)
     try : 
         res = 100*((player_mob-player_2_mob)/(player_mob+player_2_mob))
     except ZeroDivisionError:
         res = 0
     return res
+
+def stable(state):
+    player = state['current']
+    player_2 = (player+1)%2
+    sides = [[i for i in range(1,7)], [i for i in range(8, 49) if i % 8 == 0], [i for i in range(57, 63)], [15,23,31,39,47,55]]
+    player_stab = [i for i in state["board"][player] if i in sides]
+    player_2_stab = [i for i in state["board"][player_2] if i in sides]
+    try :
+        res = 50*((len(player_stab)-len(player_2_stab))/(len(player_stab)+len(player_2_stab)))
+    except ZeroDivisionError:
+        res = 0
+    return res
+    
+
     
 def heuristic(state, player= None):
     player = state['current']
-    return coinparty(state) + cornerCaptured(state) + mobility(state)
+    return coinparty(state) + cornerCaptured(state) + mobility(state) + stable(state)
     
 
 def negamaxWithPruningIterativeDeepening(state, player, timeout=0.7):
@@ -224,7 +237,7 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=0.7):
     over = False
 
 
-    while value > -300 and time.time() - start < timeout and not over:
+    while value > -350 and time.time() - start < timeout and not over:
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
         depth += 1
     print("depth:", depth, "value:", value)
