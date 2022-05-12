@@ -42,7 +42,11 @@ def sender(message, client):
 def reciev_1():
     rc_address = ("127.0.0.1", 8888)
     with socket.socket() as so:
-        so.bind(rc_address)
+        try:
+            so.bind(rc_address)
+        except OSError:
+            print("Port already in use")
+            reciev_1()
         so.listen()
         while True:
             client, address = so.accept()
@@ -54,7 +58,11 @@ def reciev_1():
 def reciev_2():
     rc_address = ("127.0.0.1", 7777)
     with socket.socket() as so:
-        so.bind(rc_address)
+        try:
+            so.bind(rc_address)
+        except OSError:
+            print("Port already in use")
+            reciev_2()
         so.listen()
         while True:
             client, address = so.accept()

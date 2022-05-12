@@ -146,11 +146,6 @@ def Othello(players):
 
 
 
-    
-# Coin Parity Heuristic Value =
-# 100* (Max Player Coins –Min Player Coins)/
-# (Max Player Coins + Min Player Coins)
-
 def coinparty(state):
     player = state["current"]
     player_2 = (player+1)%2
@@ -158,13 +153,6 @@ def coinparty(state):
     otherP = len(state["board"][player_2])
     return 100*((currentP-otherP)/(currentP+otherP))
 
-# if((Max Player Corner Value + Min Player Corner Value) !=0) 
-
-# Corner Heuristic Value =
-    # 100* (Max Player Corner Heurisitc Value –Min Player Corner Heuristic Value)/
-    # (Max Player Corner Heuristic Value + Min Player Corner else Heurisitc Value)
-#else:
-#   Corner Heuristic Value = 0
 
 def cornerCaptured(state):
     corners = [0, 7, 56, 63]
@@ -186,14 +174,28 @@ def cornerCaptured(state):
         res = 0
     return res
 
+def mobility(state):
+    player = state['current']
+    player_2 = (player+1)%2
+    player_mob = len(possibleMoves(state))
+    state_2 = copy.deepcopy(state)
+    state_2['current'] = player_2
+    player_2_mob = len(possibleMoves(state_2))
+    print(player_mob, player_2_mob)
+    try : 
+        res = 100*((player_mob-player_2_mob)/(player_mob+player_2_mob))
+    except ZeroDivisionError:
+        res = 0
+    return res
     
 def heuristic(state, player= None):
     player = state['current']
-    return coinparty(state) + cornerCaptured(state) 
+    return coinparty(state) + cornerCaptured(state) + mobility(state)
     
 
-def negamaxWithPruningIterativeDeepening(state, player, timeout=1):
+def negamaxWithPruningIterativeDeepening(state, player, timeout=0.7):
     cache = defaultdict(lambda : 0)
+
 
     def cachedNegamaxWithPruningLimitedDepth(state, player, depth, alpha=float('-inf'), beta=float('inf')):
         over = isGameOver(state)
@@ -220,10 +222,12 @@ def negamaxWithPruningIterativeDeepening(state, player, timeout=1):
     depth = 1
     start = time.time()
     over = False
-    while value > -200 and time.time() - start < timeout and not over:
+
+
+    while value > -300 and time.time() - start < timeout and not over:
         value, move, over = cachedNegamaxWithPruningLimitedDepth(state, player, depth)
         depth += 1
-
+    print("depth:", depth, "value:", value)
     return value, move
 
 @timeit
