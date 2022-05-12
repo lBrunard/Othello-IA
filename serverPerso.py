@@ -1,13 +1,15 @@
+from copy import deepcopy
 import socket
 import threading
 import json
 import jeu
 import random
+import time
 import sys
 
 inscription = json.dumps({
    "request": "subscribe",
-   "port": 0,
+   "port": "0",
    "name": "Client 1",
    "matricules": ["20078", "20070"]
 })
@@ -26,22 +28,31 @@ def creat_listener(port, name, type):
     name.start()
 
 def subscribe():
-    types = ["random", "negamax"]
+    types = ["negamax", "random"]
     for i in range(int(sys.argv[2])):
+        print("Creating client " + str(i+1))
         port = random.randint(10000, 60000)
         type = random.choice(types)
+        inscription = json.dumps({
+            "request": "subscribe",
+            "port": str(port),
+            "name": "Client " + str(i),
+            "matricules": ["i", "i{}".format(i+2)]
+        })
+
         sender_address = (sys.argv[1], 3000)
         with socket.socket() as s:
             s.connect(sender_address)
-            inscription["port"] = str(port)
             s.send(inscription.encode())
             s.close()
-        creat_listener(port, "Client {}, {}".format(i+1, type), type)
+        creat_listener(port, "Client {}".format(i+1), type[i])
+        time.sleep(1)
 
 def sender(message, client):
     client.send(message.encode())
 
 def reciev(port, name, type):
+    print("Listening on port " + str(port))
     rc_address = ("localhost", port)
     with socket.socket() as so:
         so.bind(rc_address)
@@ -74,9 +85,7 @@ def play_random(message, client, player):
     final["move"] = res
     return sender(json.dumps(final), client)
 
-  
-
-def checker(message, client, player):
+def checker(message, client, player,type):
     m = json.loads(message)
     if message == ping_message:
         sender(pong_message, client)
