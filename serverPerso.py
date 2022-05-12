@@ -5,22 +5,11 @@ import jeu
 import random
 import sys
 
-
-
-port_1 = random.choice([i for i in range(3000, 3010)])
-port_2 = random.choice([i for i in range(4000, 4010)])
-
 inscription = json.dumps({
    "request": "subscribe",
-   "port": port_1,
+   "port": 0,
    "name": "Client 1",
    "matricules": ["20078", "20070"]
-})
-inscription_2 =json.dumps({
-   "request": "subscribe",
-   "port": port_2,
-   "name": "Client 2",
-   "matricules": ["CL2", "CL2"]
 })
 
 move_resp = {
@@ -32,23 +21,28 @@ move_resp = {
 ping_message = json.dumps({"request": "ping"})
 pong_message = json.dumps({"response": "pong"})
 
-def subscribe():
-    sender_address = (sys.argv[1], 3000)
-    with socket.socket() as s:
-        s.connect(sender_address)
+def creat_listener(port, name, type):
+    name = threading.Thread(target=reciev, args=(port,name, type))
+    name.start()
 
-        s.send(inscription.encode())
-        s.close()
-    with socket.socket() as s:
-        s.connect(sender_address)
-        s.send(inscription_2.encode())
-        s.close()
-    
+def subscribe():
+    types = ["random", "negamax"]
+    for i in range(int(sys.argv[2])):
+        port = random.randint(10000, 60000)
+        type = random.choice(types)
+        sender_address = (sys.argv[1], 3000)
+        with socket.socket() as s:
+            s.connect(sender_address)
+            inscription["port"] = str(port)
+            s.send(inscription.encode())
+            s.close()
+        creat_listener(port, "Client {}, {}".format(i+1, type), type)
+
 def sender(message, client):
     client.send(message.encode())
 
-def reciev_1():
-    rc_address = ("localhost", port_1)
+def reciev(port, name, type):
+    rc_address = ("localhost", port)
     with socket.socket() as so:
         so.bind(rc_address)
         so.listen()
@@ -56,22 +50,11 @@ def reciev_1():
             client, address = so.accept()
             with client:
                 message = client.recv(2048).decode()
-                checker(message, client, "Client 1")
+                checker(message, client, name, type)
                 client.close()
 
-def reciev_2():
-    rc_address = ("localhost", port_2)
-    with socket.socket() as so:
-        so.bind(rc_address)
-        so.listen()
-        while True:
-            client, address = so.accept()
-            with client:
-                message = client.recv(2048).decode()
-                checker(message, client, "Client 2")
-                client.close()
 
-def play_1(message, client, player):
+def play_negamax(message, client, player):
     state = message["state"]
     final = move_resp
     res = jeu.next_branch(state, jeu.negamaxWithPruningIterativeDeepening)
@@ -80,10 +63,8 @@ def play_1(message, client, player):
         return sender(json.dumps(final), client)
     final["move"] = res
     return sender(json.dumps(final), client)
- 
-    
 
-def play_2(message, client, player):
+def play_random(message, client, player):
     state = message["state"]
     final = move_resp
     res = jeu.random_choice(state)
@@ -92,6 +73,7 @@ def play_2(message, client, player):
         return sender(json.dumps(final), client)
     final["move"] = res
     return sender(json.dumps(final), client)
+
   
 
 def checker(message, client, player):
@@ -99,13 +81,11 @@ def checker(message, client, player):
     if message == ping_message:
         sender(pong_message, client)
         print("connected")
-    if m["request"] == "play" and player == "Client 1":
-        play_1(m, client, player)
-    if m["request"] == "play" and player == "Client 2":
-        play_2(m, client, player)
+    if m["request"] == "play" and type == "random":
+        play_random(m, client, player)
+    if m["request"] == "play" and type == "negamax":
+        play_negamax(m, client, player)
 
 
 if "__main__" == __name__:
     subscribe()
-    thread_rc_1 = threading.Thread(target=reciev_1).start()
-    reciev_2()

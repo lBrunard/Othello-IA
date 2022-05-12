@@ -206,8 +206,9 @@ def heuristic(state, player= None):
     return coinparty(state) + cornerCaptured(state) + mobility(state) + stable(state)
     
 
-def negamaxWithPruningIterativeDeepening(state, player, timeout=2.7):
+def negamaxWithPruningIterativeDeepening(state, player, timeout=0.7):
     cache = defaultdict(lambda : 0)
+
     def cachedNegamaxWithPruningLimitedDepth(state, player, depth, alpha=float('-inf'), beta=float('inf')):
         over = isGameOver(state)
         if over or depth == 0:
