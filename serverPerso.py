@@ -69,16 +69,15 @@ class client:
             so.listen()
             while True:
                 print("Waiting for connection")
-                client, address = so.accept()
-                with client:
+                self.client, address = so.accept()
+                with self.client:
                     print("Client " + self.name + " connected")
-                    message = client.recv(2048).decode()
+                    message = self.client.recv(2048).decode()
                     print(message)
-                    self.client = client
                     if message == ping_message:
                         self.ping()
                     self.play(json.loads(message))
-                    client.close()
+                    self.client.close()
                     print("Client " + self.name + " disconnected")
 
 
