@@ -53,7 +53,7 @@ class client:
         self.create_thread()
         
     def create_thread(self):
-        self.thread = threading.Thread(target=self.reciev, args=(self.port,self.name,self.type))
+        self.thread = threading.Thread(target=self.reciev)
         self.thread.daemon = True
         self.thread.start()
 
@@ -61,21 +61,25 @@ class client:
         self.thread.join()
 
 
-    def reciev(self, port, name, type):
+    def reciev(self):
         print("Listening on port " + str(self.port))
-        rc_address = ("127.0.0.1", self.port)
+        rc_address = ("localhost", self.port)
         with socket.socket() as so:
             so.bind(rc_address)
             so.listen()
             while True:
-                self.client, address = so.accept()
+                print("Waiting for connection")
+                client, address = so.accept()
                 with client:
-                    print("Client " + name + " connected")
+                    print("Client " + self.name + " connected")
                     message = client.recv(2048).decode()
                     print(message)
+                    self.client = client
                     if message == ping_message:
                         self.ping()
                     self.play(json.loads(message))
+                    client.close()
+                    print("Client " + self.name + " disconnected")
 
 
     def sender(self, message):
@@ -97,24 +101,17 @@ class client:
         send["move"] = res
         return self.sender(json.dumps(send))
 
-# def create_client(name, port, type, host):
-#     client = client(name, port, type, host)
-#     client.subscribe()
-#     client.create_thread()
-#     return client
-
-
 if "__main__" == __name__:
     ports = [i for i in range(3000, 5000)]
     clients = []
     client_1 = client("Client 1", random.choice(ports), "random", "localhost")
     client_1.subscribe()
-    client_1.create_thread()
+    #client_1.create_thread()
     clients.append(client_1)
     time.sleep(1)
     client_2 = client("Client 2", random.choice(ports), "negamax", "localhost")
     client_2.subscribe()
-    client_2.create_thread()
+    #client_2.create_thread()
     clients.append(client_2)
     try:
         while True:
@@ -124,7 +121,8 @@ if "__main__" == __name__:
     except KeyboardInterrupt:
         for i in clients:
             del i
-        sys.exit(0)
+        print("Exiting")
+        sys.exit()
     
 
 
