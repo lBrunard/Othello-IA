@@ -1,4 +1,3 @@
-from copy import deepcopy
 import socket
 import threading
 import json
@@ -30,6 +29,15 @@ class client:
         self.type = type
         self.sender_addr = (host, 3000)
 
+    def __str__(self):
+        if self.thread.is_alive():
+            return "Client " + self.name + " is alive"
+        return "Client" + self.name + " is dead"
+    
+    def __del__(self):
+        self.client.close()
+        self.join_tread()
+
     def subscribe(self):
         print("Creating Client")
         inscription = json.dumps({
@@ -42,84 +50,81 @@ class client:
             s.connect(self.sender_addr)
             s.send(inscription.encode())
             s.close()
+        self.create_thread()
         
-    def create_thre
+    def create_thread(self):
+        self.thread = threading.Thread(target=self.reciev, args=(self.port,self.name,self.type))
+        self.thread.daemon = True
+        self.thread.start()
+
+    def join_tread(self):
+        self.thread.join()
 
 
-
-def creat_listener(port, name, type):
-    name = threading.Thread(target=reciev, args=(port,name, type))
-    name.start()
-
-def subscribe():
-    types = ["negamax", "random"]
-    for i in range(int(sys.argv[2])):
-        print("Creating client " + str(i+1))
-        port = random.randint(10000, 60000)
-        type = random.choice(types)
-        inscription = json.dumps({
-            "request": "subscribe",
-            "port": str(port),
-            "name": "Client " + str(i),
-            "matricules": [type, str(port)]
-        })
-
-        sender_address = (sys.argv[1], 3000)
-        with socket.socket() as s:
-            s.connect(sender_address)
-            s.send(inscription.encode())
-            s.close()
-        creat_listener(port, "Client {}".format(i+1), type[i])
-        time.sleep(1)
-
-def sender(message, client):
-    client.send(message.encode())
-
-def reciev(port, name, type):
-    print("Listening on port " + str(port))
-    rc_address = ("localhost", port)
-    with socket.socket() as so:
-        so.bind(rc_address)
-        so.listen()
-        while True:
-            client, address = so.accept()
-            with client:
-                message = client.recv(2048).decode()
-                print(message)
-                checker(message, client, name, type)
-                client.close()
+    def reciev(self, port, name, type):
+        print("Listening on port " + str(self.port))
+        rc_address = ("127.0.0.1", self.port)
+        with socket.socket() as so:
+            so.bind(rc_address)
+            so.listen()
+            while True:
+                self.client, address = so.accept()
+                with client:
+                    print("Client " + name + " connected")
+                    message = client.recv(2048).decode()
+                    print(message)
+                    if message == ping_message:
+                        self.ping()
+                    self.play(json.loads(message))
 
 
-def play_negamax(message, client, player):
-    state = message["state"]
-    final = move_resp
-    res = jeu.next_branch(state, jeu.negamaxWithPruningIterativeDeepening)
-    if res == None:
-        final["move"] = None
-        return sender(json.dumps(final), client)
-    final["move"] = res
-    return sender(json.dumps(final), client)
+    def sender(self, message):
+        self.client.send(message.encode())
 
-def play_random(message, client, player):
-    state = message["state"]
-    final = move_resp
-    res = jeu.random_choice(state)
-    if res == None:
-        final["move"] = None
-        return sender(json.dumps(final), client)
-    final["move"] = res
-    return sender(json.dumps(final), client)
+    def ping(self):
+        self.sender(pong_message)
+    
+    def play(self, message):
+        state = message["state"]
+        send = move_resp
+        if self.type == "random":
+            res = jeu.random_choice(state)
+        elif self.type == "negamax":
+            res = jeu.next_branch(state, jeu.negamaxWithPruningIterativeDeepening)
+        if res == None:
+            send["move"] = None
+            return self.sender(json.dumps(send))
+        send["move"] = res
+        return self.sender(json.dumps(send))
 
-def checker(message, client, player,type):
-    m = json.loads(message)
-    if message == ping_message:
-        sender(pong_message, client)
-        print("connected")
-    if m["request"] == "play" and type == "random":
-        play_random(m, client, player)
-    if m["request"] == "play" and type == "negamax":
-        play_negamax(m, client, player)
+# def create_client(name, port, type, host):
+#     client = client(name, port, type, host)
+#     client.subscribe()
+#     client.create_thread()
+#     return client
 
 
 if "__main__" == __name__:
-    subscribe()
+    ports = [i for i in range(3000, 5000)]
+    clients = []
+    client_1 = client("Client 1", random.choice(ports), "random", "localhost")
+    client_1.subscribe()
+    client_1.create_thread()
+    clients.append(client_1)
+    time.sleep(1)
+    client_2 = client("Client 2", random.choice(ports), "negamax", "localhost")
+    client_2.subscribe()
+    client_2.create_thread()
+    clients.append(client_2)
+    try:
+        while True:
+            time.sleep(1)
+            print(client_1)
+            print(client_2)
+    except KeyboardInterrupt:
+        for i in clients:
+            del i
+        sys.exit(0)
+    
+
+
