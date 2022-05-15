@@ -245,12 +245,5 @@ def next_branch(state, fct):
     _, move = fct(state, player)
     return move
 
-def random_choice(state):
-    moves = possibleMoves(state)
-    res = None
-    if moves != []:
-        res =  random.choice(moves)
-    return res
-
 Game = Othello
 state, next = Game(['LB', 'LB'])
