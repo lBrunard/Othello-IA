@@ -1,16 +1,6 @@
-import threading
-import time
+import socket
 
-def printer():
-    while True:
-        print("Hello")
-        time.sleep(1)
-
-
-
-
-
-if "__main__" == __name__:
-    thread = threading.Thread(target=printer)
-    thread.join(5)
+def create_socket():
+    with socket.socket() as s:
+        s.bind(('localhost', 1234))
     

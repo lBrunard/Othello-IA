@@ -37,6 +37,7 @@ class client:
     def __del__(self):
         self.client.close()
         self.join_tread()
+        print("Client " + self.name + " disconnected")
 
     def subscribe(self):
         print("Creating Client")
@@ -60,7 +61,6 @@ class client:
     def join_tread(self):
         self.thread.join()
 
-
     def reciev(self):
         print("Listening on port " + str(self.port))
         rc_address = ("localhost", self.port)
@@ -70,11 +70,12 @@ class client:
             while True:
                 print("Waiting for connection")
                 self.client, address = so.accept()
+                print("Connected to " + str(address))
                 with self.client:
                     print("Client " + self.name + " connected")
                     message = self.client.recv(2048).decode()
                     print(message)
-                    if message == ping_message:
+                    if json.loads() == ping_message:
                         self.ping()
                     self.play(json.loads(message))
                     self.client.close()
@@ -88,12 +89,12 @@ class client:
         self.sender(pong_message)
     
     def play(self, message):
-        state = message["state"]
+        state_party = message["state"]
         send = move_resp
         if self.type == "random":
-            res = jeu.random_choice(state)
+            res = jeu.random_choice(state_party)
         elif self.type == "negamax":
-            res = jeu.next_branch(state, jeu.negamaxWithPruningIterativeDeepening)
+            res = jeu.next_branch(state_party, jeu.negamaxWithPruningIterativeDeepening)
         if res == None:
             send["move"] = None
             return self.sender(json.dumps(send))
@@ -105,12 +106,9 @@ if "__main__" == __name__:
     clients = []
     client_1 = client("Client 1", random.choice(ports), "random", "localhost")
     client_1.subscribe()
-    #client_1.create_thread()
     clients.append(client_1)
-    time.sleep(1)
     client_2 = client("Client 2", random.choice(ports), "negamax", "localhost")
     client_2.subscribe()
-    #client_2.create_thread()
     clients.append(client_2)
     try:
         while True:
