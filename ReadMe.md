@@ -81,8 +81,7 @@ def stable(state):
 The stable function calculates the number of sides that each player will have at the traded move. The function returns a value between 50 and -50, the half of the function concerning the corners because the corners cannot be taken and the sides are more likely to be taken
 
 ## Used Library
-- sys
-- socket
+- sys\n- socket
 - threading
 - json
 - pytest
