@@ -37,11 +37,9 @@ def test_jeu():
     state_2['board'][0] = [0]
     state_2['board'][1] = [7]
     assert jeu.heuristic(state) == 0
-    assert jeu.random_choice(state) == None
     state_2 = state
     state_2["board"][0] = [28]
     state_2["board"][1] = [36]
-    assert jeu.random_choice(state) == 44
     try :
         assert jeu.next(state, None) == state
     except game.BadMove:
