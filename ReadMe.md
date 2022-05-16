@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/lBrunard/Othello-IA/branch/main_2/graph/badge.svg?token=AOSGH6LWGD)](https://codecov.io/gh/lBrunard/Othello-IA)
+
 # Othello IA project
 
 IA created for the purpose of the PI2C course project.
