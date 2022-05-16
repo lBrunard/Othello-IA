@@ -17,11 +17,7 @@ IA created for the purpose of the PI2C course project.
 
 To start the client, you must type in your console :  
 ```zsh
-<<<<<<< HEAD
-python3 "path"/serverPerso.py  "Adress  of  runnership" "port  of  runner ship  (optional,  defalut  3000)"
-=======
 python3 "path"/serverPerso.py  "Adress  of  runnership" "port  of  runnership  (optional,  defalut  3000)"
->>>>>>> 6758c150b31910da636c9222eedabae823712eae
 ```
   
   
