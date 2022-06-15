@@ -6,13 +6,6 @@ import random
 import time
 import sys
 
-inscription = json.dumps({
-   "request": "subscribe",
-   "port": "0",
-   "name": "Client 1",
-   "matricules": ["20078", "20070"]
-})
-
 move_resp = {
    "response": "move",
    "move": "the_move_played",
@@ -75,7 +68,7 @@ class client:
                     print("Client " + self.name + " connected")
                     message = self.client.recv(2048).decode()
                     print(message)
-                    if json.loads() == ping_message:
+                    if message == json.loads(ping_message):
                         self.ping()
                     self.play(json.loads(message))
                     self.client.close()

@@ -1,6 +1,13 @@
 import socket
+import time
 
 def create_socket():
-    with socket.socket() as s:
-        s.bind(('localhost', 1234))
+    while True:
+        time.sleep(0.5)
+        with socket.socket() as s:
+            s.connect(("localhost", 10000))
+            s.send("Hello World")
+            s.close()
+
+create_socket()
     
